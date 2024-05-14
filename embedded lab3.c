@@ -1,6 +1,10 @@
 #include "Io.h"
 #include "tm4c123gh6pm.h"
 #include "String.h"
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+
 
 void RGB_LEDS(void);
 void UART0_init();
@@ -16,12 +20,18 @@ void UART_OutString(char *chs);
 void getCommand(char *command , int len , char start , char end);
 //NMEA $GPRMC , , , ,  *
 
-void implement_GPS_fix( char * command , int len);
+void implement_GPS_fix();
 int check_GPS_FIX(char *chs);
 void Parse_GPS_command(char *chs , int len,char *log_Name);
 
 void extract_Detailed_Location_info(char *Location , char *detailed_location);
 void Take_instant_location(char *point);
+
+double take_longitude(char *point);
+double take_latitude(char *point);
+
+double haversine(double lat1, double lon1, double lat2, double lon2);
+
 
 #define Turn_Off_All_leds_Mask  ~0x0E
 #define Turn_On_RED_LED_Mask  0x02
@@ -32,7 +42,14 @@ void Take_instant_location(char *point);
 //-------------------------------------//
 
 int main(){	
+	char *point_command = "";
+	char *point = "";
+	char *trajectory = "";
+	char *previous_point = "";
+	double total_distance;
 	const int len = 10000;
+	char start_point_command[50] = "";
+	char start_point[30] = "";
 	char command[len] = {0};
 	UART0_init();
 	RGB_LEDS();
@@ -40,24 +57,118 @@ int main(){
 
 	implement_GPS_fix(command , len);
 	
-	char *start_point_command = "";
-	char *start_point = "";
+
 	//
 	Take_instant_location(start_point_command );
 	extract_Detailed_Location_info(start_point_command  , start_point );
 	
-	char *point_command = "";
-	char *point = "";
-	char *trajectory = "";
+	
+	strcpy(previous_point , start_point);
+	total_distance = 0;
+	
 	while(1){
+		double distance;
+		double point1_lat;
+		double point1_lon;
+		double point2_lat ;
+		double point2_lon;
 		Take_instant_location(point_command );
 		extract_Detailed_Location_info(point_command  , point );
 		strcat(trajectory , point);
+	
+		point1_lat = take_latitude(previous_point); 
+    point1_lon = take_longitude(previous_point);
+		
+		
+    point2_lat = take_latitude(point); 
+    point2_lon = take_longitude(point);
+		
+    // Calculate distance
+		
+    distance = haversine(point1_lat, point1_lon, point2_lat, point2_lon);
+		total_distance += distance;
+		
+    //printf("Distance between the two points: %.2f meters\n", distance);
+		
+    strcpy(previous_point,point);
 		point_command = "";
 		point = "";
 		
 	}
+	 // Example coordinates in degrees and minutes
+  
+	
 }
+
+//-------------------------------------//
+
+double take_longitude(char point[]){
+	char longitude_str[16] = "";
+	char degrees_str[16] = "";
+	char minutes_str[16] = "";
+	double longitude;
+	strncpy(longitude_str  , point + 1 , 8);
+	
+
+	strncpy(degrees_str , longitude_str , 2);
+	strncpy(minutes_str , longitude_str +2 , 7);
+
+	longitude = strtod(degrees_str,NULL) + strtod(minutes_str , NULL) / 60 ;
+	return longitude;
+
+}
+
+
+double take_latitude(char point[]){
+	char latitude_str[16] = "";
+	char degrees_str[16] = "";
+	char minutes_str[16] = "";
+	double latitude ;
+	strncpy(latitude_str  , point +10 , 9);
+	
+
+	strncpy(degrees_str , latitude_str , 2);
+	strncpy(minutes_str , latitude_str +2 , 7);
+
+	latitude = strtod(degrees_str,NULL) + strtod(minutes_str , NULL) / 60 ;
+	return latitude;
+
+}
+
+//-------------------------------------//
+
+#define R 6371000 // Radius of the Earth in meters
+#define M_PI 22/7
+double toRadians(double degree) {
+    return degree * M_PI / 180.0;
+}
+
+double haversine(double lat1, double lon1, double lat2, double lon2) {
+		double dlat;
+		double dlon;
+		double a;
+		double c;
+		double distance;
+  // Convert degrees to radians
+	
+    lat1 = toRadians(lat1);
+    lon1 = toRadians(lon1);
+    lat2 = toRadians(lat2);
+    lon2 = toRadians(lon2);
+    
+    // Haversine formula
+     dlat = lat2 - lat1;
+     dlon = lon2 - lon1;
+     a = sin(dlat / 2) * sin(dlat / 2) + cos(lat1) * cos(lat2) * sin(dlon / 2) * sin(dlon / 2);
+     c = 2 * atan2(sqrt(a), sqrt(1 - a));
+     distance = R * c;
+    
+    return distance;
+}
+
+
+   
+
 
 //-------------------------------------//
 
@@ -82,7 +193,7 @@ void Delay (unsigned long time ){
 
 //-------------------------------------//
 
-void extract_Detailed_Location_info(char *Location , char *detailed_location){
+void extract_Detailed_Location_info(char Location[] , char detailed_location[]){
 		const char delimitar[] = ",";
 	
 		const char Point_start_and_end[] = "#";
@@ -119,7 +230,6 @@ void Take_instant_location(char *point){
 	char *log_command = "";
 	while(1){
 		
-		UART_OutString("Enter :\n");
 		Parse_GPS_command(point , len , log_command);
 		if( (strcmp(log_command,"GPRMC") == 0)){
 			break;
@@ -163,7 +273,7 @@ int check_GPS_FIX(char *chs){
 	int field_index = 0;
 	 while (token != NULL) {
 					if (field_index == 2) { // The Fix Quality field is typically the 7th field in a GGA sentence
-						if(strcmp(token, "V") == 0){                                                                                                 
+						if(strcmp(token, "A") == 0){                                                                                                 
 							return 1; // Convert the token to integer and return as Fix Quality
 						}
 						break;
