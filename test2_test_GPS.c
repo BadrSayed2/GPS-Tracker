@@ -21,7 +21,7 @@ char read_UART1();
 void write_UART1(char data);
 
 void UART_OutString(char *chs);
-void getCommand(char *command , int len , char start , char end);
+void getCommand(char *command , int len ,char end );
 
 int main(){
 	char *command ;
@@ -32,7 +32,7 @@ int main(){
 	UART1_init();
 	RGB_turnOFFLEDs( Turn_Off_All_leds_Mask );
 	RGB_turnONLEDs(Turn_On_RED_LED_Mask);
-	getCommand(command , len , start , end);
+	getCommand(command , len , end);
 	
 	if( sizeof(command) != 0  ){
 			RGB_turnOFFLEDs( Turn_Off_All_leds_Mask );
@@ -50,7 +50,7 @@ void UART_OutString(char *chs){
 	}
 }
 
-void getCommand(char *command , int len , char start , char end){
+void getCommand(char *command , int len ,char end ){
 	//
 	char character;
 	int i;
@@ -58,16 +58,9 @@ void getCommand(char *command , int len , char start , char end){
 	int isParsed = 0;
 	for(i =0 ; i<len ; i++){
 		character = read_UART1();
+		write_UART1(character);
 		
-		if(character == start)
-		{
-			isParsed = 1;
-			i = 0 ;
-			continue;
-		}
-		
-		if(isParsed )  //0x0D = CR
-			command[i] = character;
+		command[i] = character;
 		
 	  if (character == end)
 			break;
@@ -99,8 +92,8 @@ void UART1_init(){
 	UART1_CTL_R 				=0X0070;			
 	UART1_LCRH_R 				=0x0301;
 	
-	/* in PORTA UART0 was on pins 0 AND 1 SO WE USED 0X03 AS a mask 
-	but here in PORTD UART1 is on pins 1 and 2 so we use 0x03 as a mask */
+	// in PORTA UART0 was on pins 0 AND 1 SO WE USED 0X03 AS a mask 
+	//but here in PORTD UART1 is on pins 1 and 2 so we use 0x03 as a mask 
 	
 	GPIO_PORTB_AFSEL_R  |=0x03;
 	GPIO_PORTB_PCTL_R		= (GPIO_PORTB_PCTL_R &0XFFFFFF00 )+ 0X00000011;
