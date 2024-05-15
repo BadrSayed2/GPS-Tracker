@@ -39,10 +39,11 @@ int main(){
 	RGB_turnONLEDs(Turn_On_RED_LED_Mask);
 	getCommand(command , len , end);
 	
-	if( sizeof(command) != 0  ){
+	/*if( sizeof(command) != 0  ){
 			RGB_turnOFFLEDs( Turn_Off_All_leds_Mask );
 			RGB_turnONLEDs(Turn_On_Green_LED_Mask);
-	}
+	}*/
+	
 
 }
 
@@ -68,7 +69,7 @@ void getCommand(char *command , int len ,char end ){
 		RGB_turnONLEDs(Turn_On_Green_LED_Mask);
 		command[i] = character;
 		
-	  if (character == end){
+	  if (character){
 			RGB_turnOFFLEDs( Turn_Off_All_leds_Mask );
 			RGB_turnONLEDs(Turn_On_Blue_LED_Mask);
 			break;
