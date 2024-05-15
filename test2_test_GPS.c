@@ -21,9 +21,9 @@ void RGB_LEDS(void);
 void RGB_turnONLEDs(char data);
 void RGB_turnOFFLEDs(char data);
 
-void UART1_init(void);
-char read_UART1(void);
-void write_UART1(char data);
+void UART2_init(void);
+char read_UART2(void);
+void write_UART2(char data);
 
 void UART_OutString(char *chs);
 void getCommand(char *command , int len ,char end );
@@ -34,7 +34,7 @@ int main(){
 	//char start = '$';
 	char end = ',';
 	RGB_LEDS();
-	UART1_init();
+	UART2_init();
 	RGB_turnOFFLEDs( Turn_Off_All_leds_Mask );
 	RGB_turnONLEDs(Turn_On_RED_LED_Mask);
 	getCommand(command , len , end);
@@ -51,7 +51,7 @@ int main(){
 
 void UART_OutString(char *chs){
 	while(*chs){
-	write_UART1(*chs);
+	write_UART2(*chs);
 	chs++;
 	}
 }
@@ -63,7 +63,7 @@ void getCommand(char *command , int len ,char end ){
 	//flag to indicate whether to read data or not
 	//int isParsed = 0;
 	for(i =0 ; i<len ; i++){
-		character = read_UART1();
+		character = read_UART2();
 		//write_UART1(character);
 		RGB_turnOFFLEDs( Turn_Off_All_leds_Mask );
 		RGB_turnONLEDs(Turn_On_Green_LED_Mask);
@@ -78,17 +78,17 @@ void getCommand(char *command , int len ,char end ){
 }
 
 
-void write_UART1(char data){
-	while( (UART1_FR_R & 0X20) != 0);
-	UART1_DR_R = data;
+void write_UART2(char data){
+	while( (UART2_FR_R & 0X20) != 0);
+	UART2_DR_R = data;
 }
 
-char read_UART1(){
+char read_UART2(){
 	while((UART1_FR_R & 0x10) != 0);
-	return (char) UART1_DR_R;
+	return (char) UART2_DR_R;
 }
 
-
+/*
 void UART1_init(){
 	// here we use UART2 for PORTB
 	SYSCTL_RCGCUART_R 	|= 0X02;
@@ -116,7 +116,31 @@ void UART1_init(){
 }
 
 
-    
+  */
+void UART2_init(void){
+	// here we use UART2 for PORTD
+		SYSCTL_RCGCUART_R 	|=0X04;
+		SYSCTL_RCGCGPIO_R  	|=0X08;
+		while((SYSCTL_PRGPIO_R & SYSCTL_PRGPIO_R3) == 0); // Wait until port D clock is connected	
+		 // Enable commiting changes
+		GPIO_PORTD_LOCK_R = GPIO_LOCK_KEY; // Unlock port D for changes
+		GPIO_PORTD_CR_R = 0xC0; // Allow commiting changes to UART2 Pins of Port D
+
+		// Configure UART2
+    UART2_CTL_R &= ~UART_CTL_UARTEN;    // Disable the UART
+    UART2_IBRD_R = 104; // Setup the BaudRate to be 9600
+    UART2_FBRD_R = 11;  // Setup the BaudRate to be 9600
+    UART2_CC_R |= UART_CC_CS_SYSCLK; // Connect system clock to UART2
+    UART2_LCRH_R = (UART_LCRH_WLEN_8 | UART_LCRH_FEN); // Word length 8, Enable FIFO, No parity
+    UART2_CTL_R = (UART_CTL_UARTEN | UART_CTL_RXE | UART_CTL_TXE);  // Enable UART2, RX, TX
+
+    // Configure GPIO pins of port D (PD7 -> Tx and PD6 -> Rx)
+    GPIO_PORTD_DEN_R = 0xC0;    // Digial enable UART2 Pins
+    GPIO_PORTD_AMSEL_R = 0; // Disable analog mode
+    GPIO_PORTD_AFSEL_R = 0xC0;  // Enable alternative funcion for PD6 and PD7
+    GPIO_PORTD_PCTL_R = (GPIO_PORTD_PCTL_R & 0x00FFFFFF) | (GPIO_PCTL_PD6_U2RX | GPIO_PCTL_PD7_U2TX); // PD5 and PD6 act as UART pins
+
+}  
     
 //-------------------------------------//
 /*
