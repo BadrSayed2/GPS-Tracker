@@ -58,12 +58,16 @@ void getCommand(char *command , int len ,char end ){
 	int isParsed = 0;
 	for(i =0 ; i<len ; i++){
 		character = read_UART1();
-		write_UART1(character);
-		
+		//write_UART1(character);
+		RGB_turnOFFLEDs( Turn_Off_All_leds_Mask );
+		RGB_turnONLEDs(Turn_On_Green_LED_Mask);
 		command[i] = character;
 		
-	  if (character == end)
+	  if (character == end){
+			RGB_turnOFFLEDs( Turn_Off_All_leds_Mask );
+			RGB_turnONLEDs(Turn_On_Blue_LED_Mask);
 			break;
+		}
 	}
 }
 
@@ -83,6 +87,8 @@ void UART1_init(){
 	// here we use UART2 for PORTB
 	SYSCTL_RCGCUART_R 	|= 0X02;
 	SYSCTL_RCGCGPIO_R  	|=  0X02;
+	
+	while((SYSCTL_PRGPIO_R & 0x02)==0);
 	
 	UART1_CTL_R &= ~ UART_CTL_UARTEN ;
 	UART1_IBRD_R  			=0x68;          
