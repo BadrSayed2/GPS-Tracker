@@ -84,13 +84,14 @@ void UART1_init(){
 	SYSCTL_RCGCUART_R 	|= 0X02;
 	SYSCTL_RCGCGPIO_R  	|=  0X02;
 	
+	UART1_CTL_R &= ~ UART_CTL_UARTEN ;
 	UART1_IBRD_R  			=0x68;          
 	UART1_FBRD_R 				=0x0B;
 	
 	// here there is no difference so we use the same masks
 	
-	UART1_CTL_R 				=0X0070;			
-	UART1_LCRH_R 				=0x0301;
+	UART1_CTL_R 				=0X0301;			
+	UART1_LCRH_R 				=0x0070;
 	
 	// in PORTA UART0 was on pins 0 AND 1 SO WE USED 0X03 AS a mask 
 	//but here in PORTD UART1 is on pins 1 and 2 so we use 0x03 as a mask 
@@ -101,6 +102,10 @@ void UART1_init(){
 	GPIO_PORTB_AMSEL_R &= ~0X03;
 	
 }
+
+
+    
+    
 //-------------------------------------//
 /*
 void write_UART0(char data){
