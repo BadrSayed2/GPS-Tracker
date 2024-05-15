@@ -58,8 +58,8 @@ void UART_OutString(char *chs){
 
 void getCommand(char *command , int len ,char end ){
 	//
-	char character;
-	int i;
+	char character = 0;
+	int i = 0 ;
 	//flag to indicate whether to read data or not
 	//int isParsed = 0;
 	for(i =0 ; i<len ; i++){
