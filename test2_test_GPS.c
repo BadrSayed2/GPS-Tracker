@@ -21,9 +21,9 @@ void RGB_LEDS(void);
 void RGB_turnONLEDs(char data);
 void RGB_turnOFFLEDs(char data);
 
-void UART2_init(void);
-char read_UART2(void);
-void write_UART2(char data);
+void UART1_init(void);
+unsigned char read_UART1(void);
+void write_UART1(unsigned char data);
 
 void UART_OutString(char *chs);
 void getCommand(char *command , int len ,char end );
@@ -34,7 +34,7 @@ int main(){
 	//char start = '$';
 	char end = ',';
 	RGB_LEDS();
-	UART2_init();
+	UART1_init();
 	RGB_turnOFFLEDs( Turn_Off_All_leds_Mask );
 	RGB_turnONLEDs(Turn_On_RED_LED_Mask);
 	getCommand(command , len , end);
@@ -51,7 +51,7 @@ int main(){
 
 void UART_OutString(char *chs){
 	while(*chs){
-	write_UART2(*chs);
+	write_UART1(*chs);
 	chs++;
 	}
 }
@@ -63,7 +63,7 @@ void getCommand(char *command , int len ,char end ){
 	//flag to indicate whether to read data or not
 	//int isParsed = 0;
 	for(i =0 ; i<len ; i++){
-		character = read_UART2();
+		character = read_UART1();
 		//write_UART1(character);
 		RGB_turnOFFLEDs( Turn_Off_All_leds_Mask );
 		RGB_turnONLEDs(Turn_On_Green_LED_Mask);
@@ -78,17 +78,17 @@ void getCommand(char *command , int len ,char end ){
 }
 
 
-void write_UART2(char data){
-	while( (UART2_FR_R & 0X0020) != 0);
-	UART2_DR_R = data;
+void write_UART1(unsigned char data){
+	while( (UART1_FR_R & 0X0020) != 0);
+	UART1_DR_R = data;
 }
 
-char read_UART2(){
+unsigned char read_UART1(){
 	while((UART1_FR_R & 0x0010) != 0);
-	return (char) (UART2_DR_R &0xFF );
+	return (unsigned char) (UART1_DR_R & 0xFF );
 }
 
-/*
+
 void UART1_init(){
 	// here we use UART2 for PORTB
 	SYSCTL_RCGCUART_R 	|= 0X02;
@@ -116,7 +116,8 @@ void UART1_init(){
 }
 
 
-  */
+  
+	/*
 void UART2_init(void){
 	// here we use UART2 for PORTD
 		SYSCTL_RCGCUART_R 	|=0X04;
@@ -141,7 +142,7 @@ void UART2_init(void){
     GPIO_PORTD_PCTL_R = (GPIO_PORTD_PCTL_R & 0x00FFFFFF) | (GPIO_PCTL_PD6_U2RX | GPIO_PCTL_PD7_U2TX); // PD5 and PD6 act as UART pins
 
 }  
-    
+    */
 //-------------------------------------//
 /*
 void write_UART0(char data){
