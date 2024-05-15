@@ -22,13 +22,13 @@ void getCommand(char *command , int len , char start , char end);
 
 void implement_GPS_fix();
 int check_GPS_FIX(char *chs);
-void Parse_GPS_command(char *chs , int len,char *log_Name);
+void Parse_GPS_command(char *chs , int len,char log_Name[]);
 
 void extract_Detailed_Location_info(char *Location , char *detailed_location);
 void Take_instant_location(char *point);
 
-double take_longitude(char *point);
-double take_latitude(char *point);
+double take_longitude(char point[]);
+double take_latitude(char point[]);
 
 double haversine(double lat1, double lon1, double lat2, double lon2);
 
@@ -87,7 +87,7 @@ int main(){
 		
     distance = haversine(point1_lat, point1_lon, point2_lat, point2_lon);
 		total_distance += distance;
-		
+		if(total_distance >= 100) break;
     //printf("Distance between the two points: %.2f meters\n", distance);
 		
     strcpy(previous_point,point);
@@ -95,6 +95,7 @@ int main(){
 		point = "";
 		
 	}
+	
 	 // Example coordinates in degrees and minutes
   
 	
@@ -227,18 +228,15 @@ void extract_Detailed_Location_info(char Location[] , char detailed_location[]){
 void Take_instant_location(char *point){
 	
 	int len = 10000;
-	char *log_command = "";
+	char log_command[50] = "";
 	while(1){
 		
 		Parse_GPS_command(point , len , log_command);
 		if( (strcmp(log_command,"GPRMC") == 0)){
 			break;
 		}			
-		//UART_OutString(point );
-		//UART_OutString("\n");
-		
 		point = "";
-		log_command = "";
+		strcpy(log_command , "");
 	}
 	
 }
@@ -247,20 +245,16 @@ void Take_instant_location(char *point){
 
 void implement_GPS_fix(){
 	int len = 10000;
-	char *point = "";
-	char *log_command = "";
+	char point[50] = "";
+	char log_command[50] = "";
 	while(1){
-		
-		UART_OutString("Enter :\n");
 		Parse_GPS_command(point , len , log_command);
 		if( (strcmp(log_command,"GPRMC") == 0) && check_GPS_FIX(point) ){
 			break;
 		}			
-		//UART_OutString(point );
-		//UART_OutString("\n");
 		
-		point = "";
-		log_command = "";
+		strcpy(point , "" );
+		strcpy(log_command , "" );
 	}
 	
 }
@@ -285,10 +279,9 @@ int check_GPS_FIX(char *chs){
 			
 }
 
-void Parse_GPS_command(char *chs , int len,char *log_Name){
+void Parse_GPS_command(char *chs , int len,char log_Name[]){
 		getCommand(chs,len,'$','*');
 		strncpy(log_Name , chs , 5);
-		log_Name[5] = '\0';
 		
 }
 //-------------------------------------//
@@ -313,9 +306,10 @@ void getCommand(char *command , int len , char start , char end){
 		{
 			isParsed = 1;
 			i = 0 ;
+			continue;
 		}
 		
-		if(isParsed )  //0x0D = CR
+		if(isParsed )
 			command[i] = character;
 		
 	  if (character == end)

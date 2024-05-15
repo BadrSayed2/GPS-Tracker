@@ -26,7 +26,7 @@ void getCommand(char *command , int len , char start , char end);
 
 void implement_GPS_fix();
 int check_GPS_FIX(char *chs);
-void Parse_GPS_command(char *chs , int len,char *log_Name);
+void Parse_GPS_command(char *chs , int len,char log_Name[]);
 
 int main(){
 	RGB_LEDS();
@@ -42,18 +42,16 @@ int main(){
 
 void implement_GPS_fix(){
 	int len = 10000;
-	char *point = "";
-	char *log_command = "";
+	char point[50] = "";
+	char log_command[50] = "";
 	while(1){
-		
 		Parse_GPS_command(point , len , log_command);
 		if( (strcmp(log_command,"GPRMC") == 0) && check_GPS_FIX(point) ){
 			break;
 		}			
-	
 		
-		point = "";
-		log_command = "";
+		strcpy(point , "" );
+		strcpy(log_command , "" );
 	}
 	
 }
@@ -64,7 +62,7 @@ int check_GPS_FIX(char *chs){
 	const char delimitar[] = ",";
 	char *token = strtok(chs,  delimitar);
 	int field_index = 0;
-	while (token != NULL) {
+	 while (token != NULL) {
 					if (field_index == 2) { // The Fix Quality field is typically the 7th field in a GGA sentence
 						if(strcmp(token, "A") == 0){                                                                                                 
 							return 1; // Convert the token to integer and return as Fix Quality
@@ -73,17 +71,25 @@ int check_GPS_FIX(char *chs){
 					}
 					token = strtok(NULL, delimitar);
 					field_index++;
-	}
-	
-	return 0;		
+			}
+	return 0;
+			
 }
 
-void Parse_GPS_command(char *chs , int len,char *log_Name){
+void Parse_GPS_command(char *chs , int len,char log_Name[]){
 		getCommand(chs,len,'$','*');
 		strncpy(log_Name , chs , 5);
-		log_Name[5] = '\0';
 		
 }
+//-------------------------------------//
+//$GGASD
+void UART_OutString(char *chs){
+	while(*chs){
+	write_UART0(*chs);
+	chs++;
+	}
+}
+
 //-------------------------------------//
 //$GGASD
 void UART_OutString(char *chs){
