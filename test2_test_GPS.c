@@ -16,9 +16,9 @@ void RGB_LEDS(void);
 void RGB_turnONLEDs(char data);
 void RGB_turnOFFLEDs(char data);
 
-void UART0_init();
-char read_UART0();
-void write_UART0(char data);
+void UART1_init();
+char read_UART1();
+void write_UART1(char data);
 
 void UART_OutString(char *chs);
 void getCommand(char *command , int len , char start , char end);
@@ -29,7 +29,7 @@ int main(){
 	char start = '$';
 	char end = '*';
 	RGB_LEDS();
-	UART0_init();
+	UART1_init();
 	RGB_turnOFFLEDs( Turn_Off_All_leds_Mask );
 	RGB_turnONLEDs(Turn_On_RED_LED_Mask);
 	getCommand(command , len , start , end);
@@ -45,7 +45,7 @@ int main(){
 
 void UART_OutString(char *chs){
 	while(*chs){
-	write_UART0(*chs);
+	write_UART1(*chs);
 	chs++;
 	}
 }
@@ -57,12 +57,13 @@ void getCommand(char *command , int len , char start , char end){
 	//flag to indicate whether to read data or not
 	int isParsed = 0;
 	for(i =0 ; i<len ; i++){
-		character = read_UART0();
+		character = read_UART1();
 		
 		if(character == start)
 		{
 			isParsed = 1;
 			i = 0 ;
+			continue;
 		}
 		
 		if(isParsed )  //0x0D = CR
@@ -73,8 +74,42 @@ void getCommand(char *command , int len , char start , char end){
 	}
 }
 
-//-------------------------------------//
 
+void write_UART1(char data){
+	while( (UART1_FR_R & 0X20) != 0);
+	UART1_DR_R = data;
+}
+
+char read_UART1(){
+	while((UART1_FR_R & 0x10) != 0);
+	return (char) UART1_DR_R;
+}
+
+
+void UART1_init(){
+	// here we use UART2 for PORTB
+	SYSCTL_RCGCUART_R 	|= 0X02;
+	SYSCTL_RCGCGPIO_R  	|=  0X02;
+	
+	UART1_IBRD_R  			=0x68;          
+	UART1_FBRD_R 				=0x0B;
+	
+	// here there is no difference so we use the same masks
+	
+	UART1_CTL_R 				=0X0070;			
+	UART1_LCRH_R 				=0x0301;
+	
+	/* in PORTA UART0 was on pins 0 AND 1 SO WE USED 0X03 AS a mask 
+	but here in PORTD UART1 is on pins 1 and 2 so we use 0x03 as a mask */
+	
+	GPIO_PORTB_AFSEL_R  |=0x03;
+	GPIO_PORTB_PCTL_R		= (GPIO_PORTB_PCTL_R &0XFFFFFF00 )+ 0X00000011;
+	GPIO_PORTB_DEN_R |=0X03;
+	GPIO_PORTB_AMSEL_R &= ~0X03;
+	
+}
+//-------------------------------------//
+/*
 void write_UART0(char data){
 	while( (UART0_FR_R & 0X20) != 0);
 	UART0_DR_R = data;
@@ -99,8 +134,8 @@ void UART0_init(){
 	UART0_CTL_R 				=0X0070;			
 	UART0_LCRH_R 				=0x0301;
 	
-	/* in PORTA UART0 was on pins 0 AND 1 SO WE USED 0X03 AS a mask 
-	but here in PORTD UART2 is on pins 6 and 7 so we use 0xC0 as a mask */
+	 // in PORTA UART0 was on pins 0 AND 1 SO WE USED 0X03 AS a mask 
+	// but here in PORTD UART2 is on pins 6 and 7 so we use 0xC0 as a mask 
 	
 	GPIO_PORTA_AFSEL_R  |=0x03;
 	GPIO_PORTA_PCTL_R		= (GPIO_PORTA_PCTL_R &0XFFFFFF00 )+ 0X00000011;
@@ -108,6 +143,7 @@ void UART0_init(){
 	GPIO_PORTA_AMSEL_R &= ~0X03;
 	
 }
+*/
 //-------------------------------------//
 void RGB_LEDS(void){
 	 //this line enables the port f wgich is the fifth port (0x20 = 0010 0000)
