@@ -112,6 +112,7 @@ void getCommand(char *command , int len , char start , char end){
 		{
 			isParsed = 1;
 			i = 0 ;
+			continue;
 		}
 		
 		if(isParsed )  //0x0D = CR
