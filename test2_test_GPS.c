@@ -79,13 +79,13 @@ void getCommand(char *command , int len ,char end ){
 
 
 void write_UART2(char data){
-	while( (UART2_FR_R & 0X20) != 0);
+	while( (UART2_FR_R & 0X0020) != 0);
 	UART2_DR_R = data;
 }
 
 char read_UART2(){
-	while((UART1_FR_R & 0x10) != 0);
-	return (char) UART2_DR_R;
+	while((UART1_FR_R & 0x0010) != 0);
+	return (char) (UART2_DR_R &0xFF );
 }
 
 /*
