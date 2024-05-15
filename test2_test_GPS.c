@@ -1,5 +1,5 @@
 
-#include "Io.h"
+
 #include "tm4c123gh6pm.h"
 #include "String.h"
 #include <stdio.h>
@@ -11,13 +11,18 @@
 #define Turn_On_Blue_LED_Mask  0x04
 #define Turn_On_Green_LED_Mask  0x08
 
+#define PF123_mask             0x0E
+#define PF04_mask               0x11
+#define PF_mask                0x20
+
+
 void RGB_LEDS(void);
 
 void RGB_turnONLEDs(char data);
 void RGB_turnOFFLEDs(char data);
 
-void UART1_init();
-char read_UART1();
+void UART1_init(void);
+char read_UART1(void);
 void write_UART1(char data);
 
 void UART_OutString(char *chs);
@@ -26,8 +31,8 @@ void getCommand(char *command , int len ,char end );
 int main(){
 	char *command ;
 	int len =100000;
-	char start = '$';
-	char end = '*';
+	//char start = '$';
+	char end = ',';
 	RGB_LEDS();
 	UART1_init();
 	RGB_turnOFFLEDs( Turn_Off_All_leds_Mask );
@@ -55,7 +60,7 @@ void getCommand(char *command , int len ,char end ){
 	char character;
 	int i;
 	//flag to indicate whether to read data or not
-	int isParsed = 0;
+	//int isParsed = 0;
 	for(i =0 ; i<len ; i++){
 		character = read_UART1();
 		//write_UART1(character);
